@@ -13,6 +13,7 @@ start_service() {
  	enable=$(uci get gc.config.enabled 2>/dev/null)
  	adb=$(uci get gc.config.adb 2>/dev/null)
  	rndis=$(uci get gc.config.rndis 2>/dev/null)
+ 	rndis_mac_addr=$(uci get gc.config.rndis_mac_addr 2>/dev/null)
  	mass=$(uci get gc.config.mass 2>/dev/null)
  	mass_path=$(uci get gc.config.mass_path 2>/dev/null)
  	serial=$(uci get gc.config.serial 2>/dev/null)
@@ -27,7 +28,11 @@ start_service() {
 		fi
 		gc -c
 		if [ $rndis -eq 1 ]; then
-			gc -a rndis
+			if [ -n "$rndis_mac_addr" ]; then
+				gc -a rndis $rndis_mac_addr
+			else
+				gc -a rndis
+			fi
 		fi
 		if [ $serial -eq 1 ]; then
 			gc -a serial

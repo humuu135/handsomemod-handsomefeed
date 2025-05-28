@@ -1,0 +1,44 @@
+Index: gc-20220516/gc_rndis.c
+===================================================================
+--- gc-20220516.orig/gc_rndis.c
++++ gc-20220516/gc_rndis.c
+@@ -12,6 +12,10 @@
+  */
+ 
+ #include "gc_rndis.h"
++
++#include <netinet/ether.h>
++#include <usbg/function/net.h>
++
+ int gc_rndis_create(int argc,char *argv[],gc_generic_info info)
+ {
+     usbg_gadget *gadget = gc_init(info);
+@@ -45,6 +49,28 @@ int gc_rndis_create(int argc,char *argv[
+         return GC_FAILED;
+     }
+ 
++    if (argc >= 4) {
++        struct ether_addr* paddr = ether_aton(argv[3]);
++        if (paddr != NULL) {
++            struct ether_addr mac_addr = *paddr;
++            const struct ether_addr host_addr = mac_addr;
++            usbg_ret = usbg_f_net_set_host_addr(usbg_to_net_function(f_rndis), &host_addr);
++            if (usbg_ret != USBG_SUCCESS) {
++                fprintf(stderr, "Error setting gadget rndis host addr (%d, %s)\n", usbg_ret, ether_ntoa(&host_addr));
++                //gc_clean();
++                //return GC_FAILED;
++            }
++            mac_addr.ether_addr_octet[0] += 0x10;
++            const struct ether_addr dev_addr = mac_addr;
++            usbg_ret = usbg_f_net_set_dev_addr(usbg_to_net_function(f_rndis), &dev_addr);
++            if (usbg_ret != USBG_SUCCESS) {
++                fprintf(stderr, "Error setting gadget rndis dev addr (%d, %s)\n", usbg_ret, ether_ntoa(&dev_addr));
++                //gc_clean();
++                //return GC_FAILED;
++            }
++        }
++    }
++
+     /* for now we only create one config file */
+     usbg_config *config = gc_get_config(gadget);
+ 
